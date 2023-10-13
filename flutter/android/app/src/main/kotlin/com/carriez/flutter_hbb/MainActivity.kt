@@ -70,7 +70,7 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
-        Log.e(logTag, "onDestroy")
+        Log.e(logTag, "onDestroy test")
         mainService?.let {
             unbindService(serviceConnection)
         }
