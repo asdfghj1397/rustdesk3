@@ -59,7 +59,7 @@ const val VIDEO_KEY_BIT_RATE = 1024_000
 const val VIDEO_KEY_FRAME_RATE = 30
 
 // audio const
-const val AUDIO_ENCODING = AudioFormat.ENCODING_PCM_FLOAT //  ENCODING_OPUS need API 30
+const val AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT //  ENCODING_OPUS need API 30
 const val AUDIO_SAMPLE_RATE = 48000
 const val AUDIO_CHANNEL_MASK = AudioFormat.CHANNEL_IN_STEREO
 
