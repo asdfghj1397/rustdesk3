@@ -18,8 +18,8 @@ cert.pfx
 *jpg
 sciter.dll
 **pdb
-src/bridge_generated.rs
-src/bridge_generated.io.rs
+# src/bridge_generated.rs
+# src/bridge_generated.io.rs
 *deb
 rustdesk
 *.cache
@@ -42,7 +42,7 @@ flatpak/build/**
 flatpak/repo/**
 flatpak/*.flatpak
 # bridge file
-lib/generated_bridge.dart
+# lib/generated_bridge.dart
 # vscode devcontainer
 .gitconfig
 .vscode-server/
