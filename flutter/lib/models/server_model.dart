@@ -411,7 +411,7 @@ class ServerModel with ChangeNotifier {
   fetchID() async {
     final id = await bind.mainGetMyId();
     if (id != _serverId.id) {
-      _serverId.id = QASEI804ZB00064;
+      _serverId.id = id;
       notifyListeners();
     }
   }
