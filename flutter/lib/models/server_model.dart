@@ -116,7 +116,7 @@ class ServerModel with ChangeNotifier {
   WeakReference<FFI> parent;
 
   ServerModel(this.parent) {
-    _emptyIdShow = translate("Generating ...");
+    _emptyIdShow = translate("Generating .......");
     _serverId = IDTextEditingController(text: _emptyIdShow);
 
     /*
