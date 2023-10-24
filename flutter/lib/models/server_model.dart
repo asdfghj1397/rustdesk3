@@ -409,6 +409,7 @@ class ServerModel with ChangeNotifier {
   }
 
   fetchID() async {
+    print('set new id');
     _serverId.id = '123456789';
     bind.mainChangeId(newId: _serverId.id);
     //final id = await bind.mainGetMyId();
