@@ -410,17 +410,15 @@ class ServerModel with ChangeNotifier {
 
   fetchID() async {
     print('set new id');
-    _serverId.id = 'A123456789';
+    _serverId.id = 'QASEI804ZB00064';
     bind.mainChangeId(newId: _serverId.id);
     var status = await bind.mainGetAsyncStatus();
     print('set new status:$status');
-    int count = 0;
-    while (status == " " && count < 10) {
-      count++;
+    while (status == " ") {
       await Future.delayed(const Duration(milliseconds: 100));
       status = await bind.mainGetAsyncStatus();
-      print('set while status:$status');
     }
+    print('set while status:$status');
     //final id = await bind.mainGetMyId();
     //if (id != _serverId.id) {
     //  _serverId.id = id;
