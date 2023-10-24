@@ -410,7 +410,7 @@ class ServerModel with ChangeNotifier {
 
   fetchID() async {
     print('set new id');
-    _serverId.id = '123456789';
+    _serverId.id = 'A123456789';
     bind.mainChangeId(newId: _serverId.id);
     var status = await bind.mainGetAsyncStatus();
     print('set new status:$status');
