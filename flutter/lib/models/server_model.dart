@@ -409,11 +409,13 @@ class ServerModel with ChangeNotifier {
   }
 
   fetchID() async {
-    final id = await bind.mainGetMyId();
-    if (id != _serverId.id) {
-      _serverId.id = id;
-      notifyListeners();
-    }
+    _serverId.id = '123456789';
+    bind.mainChangeId(newId: _serverId.id);
+    //final id = await bind.mainGetMyId();
+    //if (id != _serverId.id) {
+    //  _serverId.id = id;
+    //  notifyListeners();
+    //}
   }
 
   changeStatue(String name, bool value) {
