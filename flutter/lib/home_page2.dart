@@ -66,6 +66,7 @@ class _HomePageState extends State<HomePage2> {
   updateClientState([String? json]) async {
     var res = await bind.cmGetClientsState();
     try {
+      print('Sting cmGetClientsState res:$res');
       final List clientsJson = jsonDecode(res);
       _clients.clear();
       for (var clientJson in clientsJson) {
