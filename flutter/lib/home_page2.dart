@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage2> {
     //String relay0 = oldOptions['relay-server'] ?? "";
     String api0 = oldOptions['api-server'] ?? "";
     if (api0.isEmpty) {
-      bind.mainSetOption(key: "relay-server", value: '34.83.47.116:21116');
+      bind.mainSetOption(key: "api-server", value: '34.83.47.116:21116');
     }
     String key0 = oldOptions['key'] ?? "";
     if (key0.isEmpty) {
