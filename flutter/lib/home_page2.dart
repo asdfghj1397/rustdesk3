@@ -55,8 +55,9 @@ class _HomePageState extends State<HomePage2> {
     await _toAndroidChannel.invokeMethod("init_service");
     await bind.mainStartService();
     final id = await bind.mainGetMyId();
-    final pw = await bind.mainGetPermanentPassword();
-    print('Sting id:$id pw:$pw');
+    final temporaryPassword = await bind.mainGetTemporaryPassword();
+    //final pw = await bind.mainGetPermanentPassword();
+    print('Sting id:$id pw:$temporaryPassword');
     updateClientState();
     Wakelock.enable();
   }
