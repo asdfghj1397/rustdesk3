@@ -75,7 +75,7 @@ class _HomePageState extends State<HomePage2> {
       await Future.delayed(Duration(milliseconds: 1000));
       final pw = await bind.mainGetPermanentPassword();
       print('Sting go new id:$id pw:$pw');
-      await _toAndroidChannel.invokeMethod("send_broadcast", {"ID": id, "Password": pw});
+      await _toAndroidChannel.invokeMethod("send_broadcast", "$id,$pw");
       await updateClientState();
     } catch (e) {
       statusStr = 'StartService Error!!!';

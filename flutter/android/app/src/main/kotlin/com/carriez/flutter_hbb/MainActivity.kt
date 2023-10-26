@@ -147,15 +147,19 @@ class MainActivity : FlutterActivity() {
                     }
                     "send_broadcast" -> {
                         try {
-                            if (call.arguments is Map<*, *>) {
-                                val mapValue = call.arguments as Map<*, *>
-                                val id = mapValue["ID"]
-                                val pass = mapValue["Password"]
-                                Log.d("Sting","id$id pass:$pass")
-                                val intent = Intent()
-                                intent.putExtra("ID", "$id")
-                                intent.putExtra("Password", "$pass")
-                                sendBroadcast(intent);
+                            if (call.arguments is String) {
+                                val mapValue = call.arguments as String
+                                val mapValues = mapValue.split(",")
+                                if (mapValues.size == 2) {
+                                    val id = mapValues[0]
+                                    val pass = mapValues[1]
+                                    Log.d("Sting","id$id pass:$pass")
+                                    val intent = Intent()
+                                    intent.action = "com.test.rust.DATA"
+                                    intent.putExtra("ID", id)
+                                    intent.putExtra("Password", pass)
+                                    sendBroadcast(intent);
+                                }
                             }
                         } finally {
                             result.success(true)
