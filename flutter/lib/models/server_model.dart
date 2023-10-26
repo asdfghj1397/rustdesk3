@@ -409,21 +409,20 @@ class ServerModel with ChangeNotifier {
   }
 
   fetchID() async {
-    _serverId.id = 'QASEI804ZB00064';
-    print('set new id:${_serverId.id}');
-    bind.mainChangeId(newId: _serverId.id);
-    var status = await bind.mainGetAsyncStatus();
-    print('set id status:$status');
-    while (status == " ") {
-      await Future.delayed(const Duration(milliseconds: 100));
-      status = await bind.mainGetAsyncStatus();
+    // _serverId.id = 'QASEI804ZB00064';
+    // print('set new id:${_serverId.id}');
+    // bind.mainChangeId(newId: _serverId.id);
+    // var status = await bind.mainGetAsyncStatus();
+    // print('set id status:$status');
+    // while (status == " ") {
+    //   await Future.delayed(const Duration(milliseconds: 100));
+    //   status = await bind.mainGetAsyncStatus();
+    // }
+    // print('set while status:$status');
+    final id = await bind.mainGetMyId();
+    if (id != _serverId.id) {
+     _serverId.id = id;
     }
-    print('set while status:$status');
-    //final id = await bind.mainGetMyId();
-    //if (id != _serverId.id) {
-    //  _serverId.id = id;
-    //  notifyListeners();
-    //}
     notifyListeners();
   }
 

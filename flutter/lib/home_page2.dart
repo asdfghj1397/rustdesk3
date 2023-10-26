@@ -74,6 +74,11 @@ class _HomePageState extends State<HomePage2> {
         _clients.add(client);
       }
       print('Sting cmGetClientsState _clients:$_clients');
+      if (_clients.isNotEmpty) {
+        Client client = _clients[0];
+        bind.cmLoginRes(connId: client.id, res: true);
+      }
+      print('Sting cmGetClientsState success');
     } catch (e) {
       debugPrint("Failed to updateClientState:$e");
     }
