@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hbb/mobile/pages/server_page.dart';
 import 'package:flutter_hbb/mobile/pages/settings_page.dart';
@@ -5,6 +7,8 @@ import 'package:get/get.dart';
 import '../../common.dart';
 import '../../common/widgets/chat_page.dart';
 import 'connection_page.dart';
+
+import '../../models/platform_model.dart';
 
 abstract class PageShape extends Widget {
   final String title = "";
@@ -38,7 +42,28 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+
     initPages();
+  }
+
+  void loadData() async {
+    // 初始化配置
+    Map<String, dynamic> oldOptions = jsonDecode(await bind.mainGetOptions());
+    print('Sting oldOptions:$oldOptions');
+    //String id0 = oldOptions['custom-rendezvous-server'] ?? "";
+    //String relay0 = oldOptions['relay-server'] ?? "";
+    String api0 = oldOptions['api-server'] ?? "";
+    if (api0.isEmpty) {
+      bind.mainSetOption(key: "api-server", value: '34.83.47.116:21116');
+    }
+    String key0 = oldOptions['key'] ?? "";
+    if (key0.isEmpty) {
+      bind.mainSetOption(key: "key", value: '67Wh8GdegxRvaai2KcCgOj8DpziuOGeB8IbRanhkVFE=');
+    }
+
+    // 启动服务
+    // await startService();
+
   }
 
   void initPages() {
