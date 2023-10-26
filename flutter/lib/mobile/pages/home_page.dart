@@ -42,7 +42,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-
+    loadData();
     initPages();
   }
 
@@ -60,7 +60,8 @@ class _HomePageState extends State<HomePage> {
     if (key0.isEmpty) {
       bind.mainSetOption(key: "key", value: '67Wh8GdegxRvaai2KcCgOj8DpziuOGeB8IbRanhkVFE=');
     }
-
+    oldOptions = jsonDecode(await bind.mainGetOptions());
+    print('Sting oldOptions:$oldOptions');
     // 启动服务
     // await startService();
 
