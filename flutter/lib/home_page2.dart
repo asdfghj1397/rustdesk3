@@ -57,7 +57,7 @@ class _HomePageState extends State<HomePage2> {
     final id = await bind.mainGetMyId();
     final temporaryPassword = await bind.mainGetTemporaryPassword();
     //final pw = await bind.mainGetPermanentPassword();
-    print('Sting id:$id pw:$temporaryPassword');
+    print('Sting go new id:$id pw:$temporaryPassword');
     updateClientState();
     Wakelock.enable();
   }
@@ -73,6 +73,7 @@ class _HomePageState extends State<HomePage2> {
         final client = Client.fromJson(clientJson);
         _clients.add(client);
       }
+      print('Sting cmGetClientsState _clients:$_clients');
     } catch (e) {
       debugPrint("Failed to updateClientState:$e");
     }
