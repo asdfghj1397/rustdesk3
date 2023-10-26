@@ -214,6 +214,7 @@ class FfiModel with ChangeNotifier {
   // todo: why called by two position
   StreamEventHandler startEventListener(SessionID sessionId, String peerId) {
     return (evt) async {
+      print('Sting event:$evt sessionId:$sessionId peerId:$peerId');
       var name = evt['name'];
       if (name == 'msgbox') {
         handleMsgBox(evt, sessionId, peerId);
