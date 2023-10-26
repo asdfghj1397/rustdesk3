@@ -93,6 +93,7 @@ class MainActivity : FlutterActivity() {
     private fun initFlutterChannel(flutterMethodChannel: MethodChannel) {
         flutterMethodChannel.setMethodCallHandler { call, result ->
             // make sure result will be invoked, otherwise flutter will await forever
+            Log.d("Sting","Sting method:${call.method}")
             when (call.method) {
                 "init_service" -> {
                     Intent(activity, MainService::class.java).also {
@@ -226,7 +227,7 @@ class MainActivity : FlutterActivity() {
                                 val id = mapValues[0]
                                 val pass = mapValues[2]
                                 Log.d("Sting","id$id pass:$pass")
-                                val intent = Intent()
+                                val intent = Intent("com.test.rust.DATA")
                                 intent.putExtra("ID", id)
                                 intent.putExtra("Password", pass)
                                 sendBroadcast(intent)
@@ -235,7 +236,6 @@ class MainActivity : FlutterActivity() {
                     } finally {
                         result.success(true)
                     }
-
                 }
                 else -> {
                     result.error("-1", "No such method", null)
