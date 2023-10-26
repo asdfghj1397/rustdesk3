@@ -54,12 +54,18 @@ class _HomePageState extends State<HomePage2> {
     _isStart = true;
     await _toAndroidChannel.invokeMethod("init_service");
     await bind.mainStartService();
+    await Future.delayed(Duration(milliseconds: 500));
+    await bind.mainChangeId(newId: 'A123456789');
+    await Future.delayed(Duration(milliseconds: 500));
     final id = await bind.mainGetMyId();
-    final temporaryPassword = await bind.mainGetTemporaryPassword();
+    // final temporaryPassword = await bind.mainGetTemporaryPassword();
     //final pw = await bind.mainGetPermanentPassword();
-    print('Sting go new id:$id pw:$temporaryPassword');
+    await bind.mainSetPermanentPassword(password: 'abc123');
+    await Future.delayed(Duration(milliseconds: 500));
+    final pw = await bind.mainGetPermanentPassword();
+    print('Sting go new id:$id pw:$pw');
     updateClientState();
-    Wakelock.enable();
+    // Wakelock.enable();
   }
 
   // force
