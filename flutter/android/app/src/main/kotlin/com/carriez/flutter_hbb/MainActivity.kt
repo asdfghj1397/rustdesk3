@@ -228,7 +228,7 @@ class MainActivity : FlutterActivity() {
                                 val id = mapValues[0]
                                 val pass = mapValues[1]
                                 Log.d(logTag,"Sting sendBroadcast id$id pass:$pass")
-                                val intent = Intent("com.test.rust.DATA")
+                                val intent = Intent("com.skyway.client.rust.DATA")
                                 intent.putExtra("ID", id)
                                 intent.putExtra("Password", pass)
                                 sendBroadcast(intent)
