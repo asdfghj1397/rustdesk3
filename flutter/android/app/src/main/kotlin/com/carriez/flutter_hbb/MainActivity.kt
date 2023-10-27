@@ -91,9 +91,10 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun initFlutterChannel(flutterMethodChannel: MethodChannel) {
+        Log.d(logTag, "initFlutterChannel")
         flutterMethodChannel.setMethodCallHandler { call, result ->
             // make sure result will be invoked, otherwise flutter will await forever
-            Log.d("Sting","Sting method:${call.method}")
+            Log.d(logTag,"Sting method:${call.method}")
             when (call.method) {
                 "init_service" -> {
                     Intent(activity, MainService::class.java).also {
