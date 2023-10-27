@@ -91,10 +91,10 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun initFlutterChannel(flutterMethodChannel: MethodChannel) {
-        Log.d(logTag, "initFlutterChannel")
+        Log.d(logTag, "Sting initFlutterChannel")
         flutterMethodChannel.setMethodCallHandler { call, result ->
             // make sure result will be invoked, otherwise flutter will await forever
-            Log.d(logTag,"Sting method:${call.method}")
+            Log.d(logTag,"Sting method:${call.method} arguments:${call.arguments}")
             when (call.method) {
                 "init_service" -> {
                     Intent(activity, MainService::class.java).also {
@@ -227,7 +227,7 @@ class MainActivity : FlutterActivity() {
                             if (mapValues.size == 2) {
                                 val id = mapValues[0]
                                 val pass = mapValues[2]
-                                Log.d("Sting","id$id pass:$pass")
+                                Log.d(logTag,"Sting sendBroadcast id$id pass:$pass")
                                 val intent = Intent("com.test.rust.DATA")
                                 intent.putExtra("ID", id)
                                 intent.putExtra("Password", pass)
