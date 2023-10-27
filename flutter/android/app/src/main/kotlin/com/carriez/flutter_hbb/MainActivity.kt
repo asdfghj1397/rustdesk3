@@ -226,7 +226,7 @@ class MainActivity : FlutterActivity() {
                             val mapValues = mapValue.split(",")
                             if (mapValues.size == 2) {
                                 val id = mapValues[0]
-                                val pass = mapValues[2]
+                                val pass = mapValues[1]
                                 Log.d(logTag,"Sting sendBroadcast id$id pass:$pass")
                                 val intent = Intent("com.test.rust.DATA")
                                 intent.putExtra("ID", id)
