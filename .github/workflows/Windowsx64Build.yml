@@ -1,31 +1,24 @@
 name: Windows Build
 
-on: [push, pull_request]
+
+ env:
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+  VCPKG_DEFAULT_TRIPLET: x64-windows
 
 jobs:
   build:
-    runs-on: windows-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
       - name: Setup VCPKG
-        shell: pwsh
         run: |
-          git clone https://github.com/microsoft/vcpkg
+          git clone https://github.com/Microsoft/vcpkg
           cd vcpkg
-          .\bootstrap-vcpkg.bat
-          .\vcpkg integrate install
+          ./bootstrap-vcpkg.sh
+          echo "VCPKG_ROOT=$(pwd)" >> $GITHUB_ENV
 
-      - name: Install Opus with Multistream
-        shell: pwsh
+      - name: Install Dependencies
         run: |
           cd vcpkg
-          .\vcpkg install opus[multistream]:x64-windows
-
-      - name: Build Project
-        shell: pwsh
-        env:
-          VCPKG_ROOT: ${{ github.workspace }}\vcpkg  # 强制 Windows 路径格式
-        run: |
-          cargo build --release -vv
+          ./vcpkg install \
+            opus[multistream]:${{ env.VCPKG_DEFAULT_TRIPLET }} \
+            --overlay-triplets=custom_triplets \
+            --keep-going
