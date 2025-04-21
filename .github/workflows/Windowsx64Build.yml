@@ -1,62 +1,45 @@
-name: Windows Build
+name: CI Build
 
-on:
-  # 强制触发配置
-  push:
-    branches: [ main ]  # 限定 main 分支触发
-    paths: [ '**' ]     # 任何文件改动都触发
-  workflow_dispatch:    # 允许手动触发
+on: [push, workflow_dispatch]
+
+env:
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+  VCPKG_DEFAULT_TRIPLET: x64-windows
 
 jobs:
   build:
     runs-on: windows-latest
-    env:
-      VCPKG_ROOT: ${{ github.workspace }}\vcpkg  # 必须用 Windows 路径格式
-      VCPKG_DEFAULT_TRIPLET: x64-windows
 
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # 必须！修复浅克隆导致的路径问题
+        fetch-depth: 0
 
     - name: Setup VCPKG
-      shell: powershell
+      shell: pwsh
       run: |
         # 强制清理旧目录
         if (Test-Path vcpkg) { Remove-Item vcpkg -Recurse -Force }
-        
         git clone https://github.com/microsoft/vcpkg
         cd vcpkg
         .\bootstrap-vcpkg.bat -disableMetrics
-        echo "VCPKG_ROOT=$pwd" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        echo "VCPKG_ROOT=$pwd" >> $env:GITHUB_ENV
+        echo "$pwd" >> $env:GITHUB_PATH
 
-    - name: Install Opus (带重试机制)
-      shell: powershell
+    - name: Install Opus (带日志调试)
+      shell: pwsh
       run: |
-        $maxRetries = 3
-        $retryCount = 0
-        
-        do {
-            try {
-                cd $env:VCPKG_ROOT
-                .\vcpkg install opus[multistream]:x64-windows --triplet=x64-windows
-                break
-            } catch {
-                $retryCount++
-                Write-Host "第 $retryCount 次重试..."
-                if ($retryCount -ge $maxRetries) { exit 1 }
-                Start-Sleep -Seconds 10
-            }
-        } while ($true)
+        cd vcpkg
+        .\vcpkg install opus[multistream]:x64-windows `
+          --overlay-triplets=${{ github.workspace }}/custom_triplets `
+          --debug `
+          2>&1 | Tee-Object -FilePath install.log
+        if ($LASTEXITCODE -ne 0) { exit 1 }
 
-    - name: Build Project
-      shell: powershell
-      env:
-        RUSTFLAGS: '-C target-feature=+crt-static'  # 静态链接运行时库
-      run: |
-        # 强制刷新环境变量
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-        
-        cargo build --release -vv
-        if (-not $?) { exit 1 }  # 严格错误检查
+    - name: Upload Logs (调试用)
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: vcpkg-install-logs
+        path: vcpkg/install.log
