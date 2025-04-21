@@ -1,7 +1,7 @@
 name: Windows Build
 
 
- env:
+
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
   VCPKG_DEFAULT_TRIPLET: x64-windows
 
