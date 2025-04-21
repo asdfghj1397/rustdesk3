@@ -1,15 +1,11 @@
+name: Rust Build with Opus
 
-name: Rust Build with VCPKG
-
-on:
-  push:
-    branches: [ r3 ]
-  pull_request:
-    branches: [ r3 ]
+on: [push, pull_request]
 
 env:
-  VCPKG_ROOT: ${{ github.workspace }}/vcpkg  # 固定VCPKG路径
-  CARGO_TERM_COLOR: always                  # 强制彩色输出
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+  VCPKG_INCLUDE_DIRS: ${{ github.workspace }}/vcpkg/installed/x64-windows/include
+  VCPKG_LIB_DIRS: ${{ github.workspace }}/vcpkg/installed/x64-windows/lib
 
 jobs:
   build:
@@ -17,31 +13,25 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # 🔧 安装 VCPKG 工具链
     - name: Install VCPKG
       shell: pwsh
       run: |
         git clone https://github.com/microsoft/vcpkg
         cd vcpkg
-        .\bootstrap-vcpkg.bat -disableMetrics
-        .\vcpkg integrate install
+        .\bootstrap-vcpkg.bat
 
-    # 📦 安装项目依赖库
-    - name: Install Dependencies
+    - name: Install Opus with Multistream
       shell: pwsh
       run: |
         cd vcpkg
-        .\vcpkg install openssl:x64-windows
-        .\vcpkg list
+        .\vcpkg install opus[multistream]:x64-windows
 
-    # 🦀 配置 Rust 环境
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
       with:
         toolchain: stable
         targets: x86_64-pc-windows-msvc
 
-    # 🏗️ 构建项目
     - name: Build Project
       shell: pwsh
       run: |
