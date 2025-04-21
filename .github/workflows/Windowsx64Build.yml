@@ -1,48 +1,62 @@
-```yaml
-name: CI Pipeline
+name: Windows Build
 
-on: [push, pull_request]
-
-env:
-  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-  VCPKG_DEFAULT_TRIPLET: x64-windows
+on:
+  # 强制触发配置
+  push:
+    branches: [ main ]  # 限定 main 分支触发
+    paths: [ '**' ]     # 任何文件改动都触发
+  workflow_dispatch:    # 允许手动触发
 
 jobs:
   build:
-    runs-on: ubuntu-latest # 或者 windows-latest，取决于您的构建环境
+    runs-on: windows-latest
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}\vcpkg  # 必须用 Windows 路径格式
+      VCPKG_DEFAULT_TRIPLET: x64-windows
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 必须！修复浅克隆导致的路径问题
 
-      - name: Setup VCPKG
-        run: |
-          mkdir -p ${{ env.VCPKG_ROOT }}
-          cd ${{ env.VCPKG_ROOT }}
-          git clone https://github.com/microsoft/vcpkg
-          cd vcpkg
-          ./bootstrap-vcpkg.sh
-          echo "VCPKG_ROOT=${{ env.VCPKG_ROOT }}" >> $GITHUB_ENV
-          echo "${{ env.VCPKG_ROOT }}/vcpkg" >> $GITHUB_PATH # 添加 vcpkg 到 PATH
+    - name: Setup VCPKG
+      shell: powershell
+      run: |
+        # 强制清理旧目录
+        if (Test-Path vcpkg) { Remove-Item vcpkg -Recurse -Force }
+        
+        git clone https://github.com/microsoft/vcpkg
+        cd vcpkg
+        .\bootstrap-vcpkg.bat -disableMetrics
+        echo "VCPKG_ROOT=$pwd" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Install Dependencies with VCPKG
-        run: |
-          cd ${{ env.VCPKG_ROOT }}/vcpkg
-          ./vcpkg install \
-            opus[multistream]:${{ env.VCPKG_DEFAULT_TRIPLET }} \
-            --overlay-triplets=${{ github.workspace }}/custom_triplets \
-            --keep-going
+    - name: Install Opus (带重试机制)
+      shell: powershell
+      run: |
+        $maxRetries = 3
+        $retryCount = 0
+        
+        do {
+            try {
+                cd $env:VCPKG_ROOT
+                .\vcpkg install opus[multistream]:x64-windows --triplet=x64-windows
+                break
+            } catch {
+                $retryCount++
+                Write-Host "第 $retryCount 次重试..."
+                if ($retryCount -ge $maxRetries) { exit 1 }
+                Start-Sleep -Seconds 10
+            }
+        } while ($true)
 
-      # 后续步骤（可选）：
-      # - name: Build Project
-      #   run: |
-      #     cd ${{ github.workspace }}
-      #     mkdir build
-      #     cd build
-      #     cmake -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/vcpkg/scripts/buildsystems/vcpkg.cmake ..
-      #     make # 或者 ninja, 取决于您的构建系统
-
-      # - name: Run Tests
-      #   run: |
-      #     cd ${{ github.workspace }}/build
-      #     ctest # 或者您的测试命令
+    - name: Build Project
+      shell: powershell
+      env:
+        RUSTFLAGS: '-C target-feature=+crt-static'  # 静态链接运行时库
+      run: |
+        # 强制刷新环境变量
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+        
+        cargo build --release -vv
+        if (-not $?) { exit 1 }  # 严格错误检查
