@@ -1,4 +1,4 @@
-name: Rust Build
+name: Windows Build
 
 on: [push, pull_request]
 
@@ -6,23 +6,26 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Install VCPKG
-      shell: pwsh
-      run: |
-        git clone https://github.com/microsoft/vcpkg
-        cd vcpkg
-        .\bootstrap-vcpkg.bat
+      - name: Setup VCPKG
+        shell: pwsh
+        run: |
+          git clone https://github.com/microsoft/vcpkg
+          cd vcpkg
+          .\bootstrap-vcpkg.bat
+          .\vcpkg integrate install
 
-    - name: Install Opus with Multistream
-      shell: pwsh
-      run: |
-        cd vcpkg
-        .\vcpkg install opus[multistream]:x64-windows --recurse
+      - name: Install Opus with Multistream
+        shell: pwsh
+        run: |
+          cd vcpkg
+          .\vcpkg install opus[multistream]:x64-windows
 
-    - name: Build Rust Project
-      shell: pwsh
-      run: |
-        $env:VCPKG_ROOT = "$pwd\vcpkg"
-        cargo build --release
+      - name: Build Project
+        shell: pwsh
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg  # 强制 Windows 路径格式
+        run: |
+          cargo build --release -vv
