@@ -3,9 +3,9 @@ name: Rust Build with VCPKG
 
 on:
   push:
-    branches: [ main ]
+    branches: [ r3 ]
   pull_request:
-    branches: [ main ]
+    branches: [ r3 ]
 
 env:
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg  # 固定VCPKG路径
