@@ -1,35 +1,69 @@
-name: RustDesk Windows Build
+name: RustDesk Universal Build
 
 on:
+  # 手动触发配置（无需参数）
   workflow_dispatch: {}
 
 jobs:
-  build:
+  windows-build:
+    name: 🪟 Windows 64位构建
     runs-on: windows-latest  # 必须使用Windows环境
+    steps:
+    - name: 🛎️ 智能检出代码
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.ref_name }}  # 自动识别触发分支
+        fetch-depth: 0  # 完整克隆历史
+        clean: true     # 清理残留文件
+
+    - name: 🛠️ 安装Rust工具链
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        target: x86_64-pc-windows-msvc  # 关键平台参数
+        override: true
+
+    - name: 🔧 编译Release版本
+      run: |
+        cargo build --release --target x86_64-pc-windows-msvc
+        # 验证生成文件
+        ls target/x86_64-pc-windows-msvc/release/*.exe
+
+    - name: 📦 上传制品
+      uses: actions/upload-artifact@v4
+      with:
+        name: rustdesk-windows-bin
+        path: |
+          target/x86_64-pc-windows-msvc/release/rustdesk.exe
+          target/x86_64-pc-windows-msvc/release/*.dll
+
+  linux-build:
+    name: 🐧 Linux构建
+    runs-on: ubuntu-latest
+    needs: windows-build  # 顺序执行
     steps:
     - name: 🛎️ 检出代码
       uses: actions/checkout@v4
       with:
         ref: ${{ github.ref_name }}
-        fetch-depth: 0
 
-    - name: 🦀 安装Rust工具链
-      uses: actions-rs/toolchain@v1
+    - name: 📦 下载Windows制品
+      uses: actions/download-artifact@v3
       with:
-        profile: minimal
-        target: x86_64-pc-windows-msvc  # 关键目标平台
-        override: true
+        name: rustdesk-windows-bin
+        path: target/win-bin
 
-    - name: 🔧 构建Release版
+    - name: 📝 生成构建报告
       run: |
-        cargo build --release --target x86_64-pc-windows-msvc
-        cd target/x86_64-pc-windows-msvc/release
-        dir rustdesk*.exe  # 验证生成文件
+        echo "分支: ${{ github.ref_name }}" > build-info.md
+        echo "提交: ${{ github.sha }}" >> build-info.md
+        echo "构建时间: $(date)" >> build-info.md
+        ls -R target >> build-info.md
 
-    - name: 📦 打包产物
-      uses: actions/upload-artifact@v3
+    - name: 📤 上传完整报告
+      uses: actions/upload-artifact@v4
       with:
-        name: rustdesk-bin
+        name: build-reports
         path: |
-          target/x86_64-pc-windows-msvc/release/rustdesk.exe
-          target/x86_64-pc-windows-msvc/release/rustdesk.dll
+          build-info.md
+          target/win-bin/*
