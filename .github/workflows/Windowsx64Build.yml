@@ -1,14 +1,14 @@
 name: Flutter Windows Build
 
 on:
-  # 添加手动触发配置 ▼
   workflow_dispatch:
     inputs:
       branch:
-        description: '要构建的分支名称'
+        description: '目标分支名称'
         required: true
-        default: 'main'
+        default: 'R3'  # 修改此处 ▼
         type: string
+
       build-mode:
         description: '构建模式'
         required: true
