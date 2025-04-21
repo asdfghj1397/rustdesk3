@@ -1,29 +1,23 @@
-#[cfg(windows)]
+// build.rs
+use std::env;
+use std::io::Write;
+use std::path::PathBuf;
+
+/// Windows 平台构建逻辑
 fn build_windows() {
-    let file = "src/platform/windows.cc";
-    cc::Build::new().file(file).compile("windows");
-    println!("cargo:rustc-link-lib=WtsApi32");
-    println!("cargo:rerun-if-changed={}", file);
+    // 编译 windows.cc
+    let windows_file = "src/platform/windows.cc";
+    cc::Build::new()
+        .file(windows_file)
+        .compile("windows");
+    println!("cargo:rustc-link-lib=WtsApi32"); // 链接 Windows 库
+    println!("cargo:rerun-if-changed={}", windows_file);
 }
 
-#[cfg(target_os = "macos")]
-fn build_mac() {
-    let file = "src/platform/macos.mm";
-    let mut b = cc::Build::new();
-    if let Ok(os_version::OsVersion::MacOS(v)) = os_version::detect() {
-        let v = v.version;
-        if v.contains("10.14") {
-            b.flag("-DNO_InputMonitoringAuthStatus=1");
-        }
-    }
-    b.file(file).compile("macos");
-    println!("cargo:rerun-if-changed={}", file);
-}
-
-#[cfg(all(windows, feature = "inline"))]
+/// Windows 资源文件编译（需启用 inline 特性）
+#[cfg(feature = "inline")]
 fn build_manifest() {
-    use std::io::Write;
-    if std::env::var("PROFILE").unwrap() == "release" {
+    if env::var("PROFILE").unwrap() == "release" {
         let mut res = winres::WindowsResource::new();
         res.set_icon("res/icon.ico")
             .set_language(winapi::um::winnt::MAKELANGID(
@@ -31,62 +25,38 @@ fn build_manifest() {
                 winapi::um::winnt::SUBLANG_ENGLISH_US,
             ))
             .set_manifest_file("res/manifest.xml");
-        match res.compile() {
-            Err(e) => {
-                write!(std::io::stderr(), "{}", e).unwrap();
-                std::process::exit(1);
-            }
-            Ok(_) => {}
+
+        if let Err(e) = res.compile() {
+            let _ = writeln!(&mut std::io::stderr(), "资源编译失败: {}", e);
+            std::process::exit(1);
         }
     }
 }
 
-fn install_android_deps() {
-    let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap();
-    if target_os != "android" {
-        return;
-    }
-    let mut target_arch = std::env::var("CARGO_CFG_TARGET_ARCH").unwrap();
-    if target_arch == "x86_64" {
-        target_arch = "x64".to_owned();
-    } else if target_arch == "x86" {
-        target_arch = "x86".to_owned();
-    } else if target_arch == "aarch64" {
-        target_arch = "arm64".to_owned();
-    } else {
-        target_arch = "arm".to_owned();
-    }
-    let target = format!("{}-android", target_arch);
-    let vcpkg_root = std::env::var("VCPKG_ROOT").unwrap();
-    let mut path: std::path::PathBuf = vcpkg_root.into();
-    path.push("installed");
-    path.push(target);
-    println!(
-        "{}",
-        format!(
-            "cargo:rustc-link-search={}",
-            path.join("lib").to_str().unwrap()
-        )
-    );
-    println!("cargo:rustc-link-lib=ndk_compat");
-    println!("cargo:rustc-link-lib=oboe");
-    println!("cargo:rustc-link-lib=oboe_wrapper");
-    println!("cargo:rustc-link-lib=c++");
-    println!("cargo:rustc-link-lib=OpenSLES");
+/// 强制指定 Opus 头文件路径
+fn force_opus_include_path() {
+    let vcpkg_root = env::var("VCPKG_ROOT").expect("VCPKG_ROOT 环境变量未设置！");
+    let include_path = PathBuf::from(vcpkg_root)
+        .join("installed")
+        .join("x64-windows")
+        .join("include");
+
+    // 向编译器传递头文件搜索路径
+    println!("cargo:include={}", include_path.to_str().unwrap());
+    println!("cargo:rerun-if-env-changed=VCPKG_ROOT"); // 环境变量变化时重新构建
 }
 
 fn main() {
-    hbb_common::gen_version();
-    install_android_deps();
-    #[cfg(all(windows, feature = "inline"))]
-    build_manifest();
-    #[cfg(windows)]
+    // 强制指定 Opus 头文件路径
+    force_opus_include_path();
+
+    // Windows 平台构建
     build_windows();
-    let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap();
-    if target_os == "macos" {
-        #[cfg(target_os = "macos")]
-        build_mac();
-        println!("cargo:rustc-link-lib=framework=ApplicationServices");
-    }
+
+    // 如果启用 inline 特性，编译资源文件
+    #[cfg(feature = "inline")]
+    build_manifest();
+
+    // 标记 build.rs 自身为依赖项
     println!("cargo:rerun-if-changed=build.rs");
 }
