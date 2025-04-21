@@ -1,4 +1,4 @@
-name: CI Build
+name: CI Pipeline
 
 on: [push, workflow_dispatch]
 
@@ -8,16 +8,16 @@ env:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-latest  # 必须与 VCPKG 三元组匹配
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4  # ✔️ 必须升级到 v4
       with:
-        fetch-depth: 0
+        fetch-depth: 0  # 修复浅克隆问题
 
     - name: Setup VCPKG
-      shell: pwsh
+      shell: powershell
       run: |
         # 强制清理旧目录
         if (Test-Path vcpkg) { Remove-Item vcpkg -Recurse -Force }
@@ -25,21 +25,20 @@ jobs:
         cd vcpkg
         .\bootstrap-vcpkg.bat -disableMetrics
         echo "VCPKG_ROOT=$pwd" >> $env:GITHUB_ENV
-        echo "$pwd" >> $env:GITHUB_PATH
 
-    - name: Install Opus (带日志调试)
-      shell: pwsh
+    - name: Install Dependencies
+      shell: powershell
       run: |
         cd vcpkg
         .\vcpkg install opus[multistream]:x64-windows `
-          --overlay-triplets=${{ github.workspace }}/custom_triplets `
-          --debug `
-          2>&1 | Tee-Object -FilePath install.log
+          --overlay-triplets="${{ github.workspace }}/custom_triplets" `
+          --keep-going `
+          --debug  # 启用详细日志
         if ($LASTEXITCODE -ne 0) { exit 1 }
 
     - name: Upload Logs (调试用)
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4  # ✔️ 关键修复：升级到 v4
       with:
-        name: vcpkg-install-logs
-        path: vcpkg/install.log
+        name: vcpkg-debug-logs
+        path: vcpkg/**/*.log  # 捕获所有日志文件
