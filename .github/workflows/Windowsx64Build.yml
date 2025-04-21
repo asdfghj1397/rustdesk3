@@ -1,10 +1,4 @@
-name: RustDesk Universal Build
-
-#on:
-  # 手动触发配置（无需参数）
- # workflow_dispatch: {}
-
-
+name: Rust Build with VCPKG
 
 on: [push]
 
@@ -14,12 +8,24 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: 🛠️ 安装Rust工具链
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        target: x86_64-pc-windows-msvc
-        override: true
+    - name: 🛠️ 安装 VCPKG
+      shell: pwsh
+      run: |
+        git clone https://github.com/microsoft/vcpkg
+        cd vcpkg
+        .\bootstrap-vcpkg.bat -disableMetrics
 
-    - name: 🔧 编译项目
-      run: cargo build --release
+    - name: 🔧 配置环境变量
+      shell: pwsh
+      run: |
+        echo "VCPKG_ROOT=$env:GITHUB_WORKSPACE/vcpkg" >> $env:GITHUB_ENV
+        echo "$env:VCPKG_ROOT" >> $env:GITHUB_PATH
+
+    - name: 📦 安装 OpenSSL
+      shell: pwsh
+      run: .\vcpkg\vcpkg install openssl:x64-windows
+
+    - name: 🦀 构建项目
+      shell: pwsh
+      run: |
+        cargo build --release --target x86_64-pc-windows-msvc -Z build-std=std,panic=abort -Z unstable-options --config "target.x86_64-pc-windows-msvc.vcpkg.root='$env:VCPKG_ROOT'"
