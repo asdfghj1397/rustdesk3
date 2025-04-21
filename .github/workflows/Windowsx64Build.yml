@@ -1,24 +1,48 @@
-name: Windows Build
+```yaml
+name: CI Pipeline
 
+on: [push, pull_request]
 
-
+env:
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
   VCPKG_DEFAULT_TRIPLET: x64-windows
 
 jobs:
   build:
+    runs-on: ubuntu-latest # 或者 windows-latest，取决于您的构建环境
+
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
       - name: Setup VCPKG
         run: |
-          git clone https://github.com/Microsoft/vcpkg
+          mkdir -p ${{ env.VCPKG_ROOT }}
+          cd ${{ env.VCPKG_ROOT }}
+          git clone https://github.com/microsoft/vcpkg
           cd vcpkg
           ./bootstrap-vcpkg.sh
-          echo "VCPKG_ROOT=$(pwd)" >> $GITHUB_ENV
+          echo "VCPKG_ROOT=${{ env.VCPKG_ROOT }}" >> $GITHUB_ENV
+          echo "${{ env.VCPKG_ROOT }}/vcpkg" >> $GITHUB_PATH # 添加 vcpkg 到 PATH
 
-      - name: Install Dependencies
+      - name: Install Dependencies with VCPKG
         run: |
-          cd vcpkg
+          cd ${{ env.VCPKG_ROOT }}/vcpkg
           ./vcpkg install \
             opus[multistream]:${{ env.VCPKG_DEFAULT_TRIPLET }} \
-            --overlay-triplets=custom_triplets \
+            --overlay-triplets=${{ github.workspace }}/custom_triplets \
             --keep-going
+
+      # 后续步骤（可选）：
+      # - name: Build Project
+      #   run: |
+      #     cd ${{ github.workspace }}
+      #     mkdir build
+      #     cd build
+      #     cmake -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+      #     make # 或者 ninja, 取决于您的构建系统
+
+      # - name: Run Tests
+      #   run: |
+      #     cd ${{ github.workspace }}/build
+      #     ctest # 或者您的测试命令
