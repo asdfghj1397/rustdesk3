@@ -1,46 +1,55 @@
-name: RustDesk CI
+name: Flutter Windows Build
 
 on:
+  # 添加手动触发配置 ▼
   workflow_dispatch:
     inputs:
       branch:
-        description: '构建分支'
+        description: '要构建的分支名称'
         required: true
-        default: 'master'
+        default: 'main'
+        type: string
+      build-mode:
+        description: '构建模式'
+        required: true
         type: choice
-        options: [master, dev]
+        options: 
+          - debug
+          - profile
+          - release
+      skip-signing:
+        description: '跳过签名'
+        required: false
+        type: boolean
+        default: false
 
 env:
   FLUTTER_VERSION: "3.29.3"
-  PROJECT_ROOT: "."  # 修复路径层级问题
-  FFIGEN_VERSION: "6.1.2"
-  BUILD_DIR: "build/windows/runner/Release"
+  PROJECT_ROOT: "./src"
 
 jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-    # 步骤顺序必须严格如下 ▼
-    - name: 📥 检出代码
+    # 步骤1：动态检出代码 ▼
+    - name: 🛎️ 检出指定分支
       uses: actions/checkout@v4
-
-    - name: 🚀 优先安装Flutter
-      uses: subosito/flutter-action@v2
       with:
-        flutter-version: "3.29.3"
-        channel: stable
-        architecture: x64
-      env:
-        PUB_CACHE: "${{ github.workspace }}/.pub_cache"  # 显式设置缓存路径
+        ref: ${{ inputs.branch || 'main' }}
+        path: ${{ env.PROJECT_ROOT }}
 
-    - name: ⚙️ 配置Flutter环境
-      shell: pwsh
-      run: |
-        # 强制刷新PATH
-        $env:Path += ";$env:FLUTTER_HOME\bin"
-        flutter config --disable-telemetry
-        flutter doctor -v
+    # 步骤2：条件签名配置 ▼
+    - name: 🔐 自动签名
+      if: ${{ !inputs.skip-signing }}
+      uses: GermanBluefox/code-sign-action@v7
+      with:
+        certificate: ${{ secrets.WINDOWS_PFX_BASE64 }}
+        password: ${{ secrets.WINDOWS_PFX_PASSWORD }}
+        folder: ${{ env.PROJECT_ROOT }}/build/windows/runner/Release
 
-    - name: 📦 安装依赖
+    # 步骤3：动态构建 ▼
+    - name: 🏗️ 执行构建
+      working-directory: ${{ env.PROJECT_ROOT }}
       run: |
-        flutter pub get --verbose
+        flutter build windows --${{ inputs.build-mode }} \
+          --dart-define=BUILD_TIMESTAMP=$(Get-Date -UFormat "%s")
