@@ -1,11 +1,6 @@
-name: Rust Build with Opus
+name: Rust Build
 
 on: [push, pull_request]
-
-env:
-  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-  VCPKG_INCLUDE_DIRS: ${{ github.workspace }}/vcpkg/installed/x64-windows/include
-  VCPKG_LIB_DIRS: ${{ github.workspace }}/vcpkg/installed/x64-windows/lib
 
 jobs:
   build:
@@ -24,16 +19,10 @@ jobs:
       shell: pwsh
       run: |
         cd vcpkg
-        .\vcpkg install opus[multistream]:x64-windows
+        .\vcpkg install opus[multistream]:x64-windows --recurse
 
-    - name: Setup Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        toolchain: stable
-        targets: x86_64-pc-windows-msvc
-
-    - name: Build Project
+    - name: Build Rust Project
       shell: pwsh
       run: |
-        $env:PATH += ";$env:VCPKG_ROOT"
-        cargo build --release --verbose
+        $env:VCPKG_ROOT = "$pwd\vcpkg"
+        cargo build --release
