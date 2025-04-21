@@ -1,55 +1,24 @@
-name: Flutter Windows Build
+name: Universal Build
 
 on:
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: '目标分支名称'
-        required: true
-        default: 'R3'  # 修改此处 ▼
-        type: string
-
-      build-mode:
-        description: '构建模式'
-        required: true
-        type: choice
-        options: 
-          - debug
-          - profile
-          - release
-      skip-signing:
-        description: '跳过签名'
-        required: false
-        type: boolean
-        default: false
-
-env:
-  FLUTTER_VERSION: "3.29.3"
-  PROJECT_ROOT: "./src"
+  # 核心配置：允许不指定分支的手动触发 ▼
+  workflow_dispatch: {}  # 空参数表示无需输入任何参数
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  build:
+    runs-on: ubuntu-latest
+
     steps:
-    # 步骤1：动态检出代码 ▼
-    - name: 🛎️ 检出指定分支
+    # 自动检出当前分支的代码 ▼
+    - name: 🛎️ 智能代码检出
       uses: actions/checkout@v4
       with:
-        ref: ${{ inputs.branch || 'main' }}
-        path: ${{ env.PROJECT_ROOT }}
+        # 关键参数：自动识别触发分支
+        ref: ${{ github.ref_name }}
+        # 避免浅克隆导致的问题
+        fetch-depth: 0
 
-    # 步骤2：条件签名配置 ▼
-    - name: 🔐 自动签名
-      if: ${{ !inputs.skip-signing }}
-      uses: GermanBluefox/code-sign-action@v7
-      with:
-        certificate: ${{ secrets.WINDOWS_PFX_BASE64 }}
-        password: ${{ secrets.WINDOWS_PFX_PASSWORD }}
-        folder: ${{ env.PROJECT_ROOT }}/build/windows/runner/Release
-
-    # 步骤3：动态构建 ▼
-    - name: 🏗️ 执行构建
-      working-directory: ${{ env.PROJECT_ROOT }}
+    - name: 🔍 验证分支信息
       run: |
-        flutter build windows --${{ inputs.build-mode }} \
-          --dart-define=BUILD_TIMESTAMP=$(Get-Date -UFormat "%s")
+        echo "当前分支: ${{ github.ref_name }}"
+        echo "提交哈希: ${{ github.sha }}"
