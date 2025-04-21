@@ -1,0 +1,73 @@
+name: RustDesk Windows x64 Build
+
+on:
+  workflow_dispatch:  # 手动触发入口
+
+env:
+  FLUTTER_VERSION: "3.10.6"
+  FLUTTER_RUST_BRIDGE_VERSION: "1.75.3"
+  FFIGEN_VERSION: "6.1.2"  # 新增ffigen版本控制
+  BUILD_DIR: "flutter/build/windows/runner/Release"
+
+jobs:
+  build-windows-x64:
+    runs-on: windows-2019
+    steps:
+    - name: 🛠️ 初始化环境
+      run: |
+        # 设置ffigen版本
+        echo "FFIGEN_VERSION=${{ env.FFIGEN_VERSION }}" >> $env:GITHUB_ENV
+
+    - name: 📥 检出代码
+      uses: actions/checkout@v3
+
+    - name: 🚀 安装Flutter环境
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: ${{ env.FLUTTER_VERSION }}
+        channel: stable
+        architecture: x64
+
+    - name: 📦 更新Dart依赖
+      run: |
+        # 在pubspec.yaml中强制指定ffigen版本
+        Add-Content -Path flutter/pubspec.yaml "`n  ffigen: ^${{ env.FFIGEN_VERSION }}"
+        cd flutter
+        flutter pub upgrade --major-versions
+
+    - name: 🔗 生成桥接代码
+      run: |
+        # 修正生成路径
+        cargo install flutter_rust_bridge_codegen --version ${{ env.FLUTTER_RUST_BRIDGE_VERSION }}
+        flutter_rust_bridge_codegen --rust-input src/flutter_ffi.rs --dart-output flutter/lib/generated_bridge.dart
+        
+        # 确保bridge_generated文件存在
+        if not exist src/bridge_generated.rs (
+          echo "::error::桥接代码生成失败！"
+          exit 1
+        )
+
+    - name: 🔨 构建Rust组件
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: x86_64-pc-windows-msvc
+        override: true
+
+    - name: 🏗️ 执行完整构建
+      run: |
+        python build.py --portable --hwcodec --flutter --feature IddDriver
+        
+        # 验证关键文件
+        if not exist ${{ env.BUILD_DIR }}/rustdesk.exe (
+          echo "::error::可执行文件未生成！"
+          exit 1
+        )
+
+    - name: 🔐 代码签名
+      if: ${{ always() }}
+      uses: GermanBluefox/code-sign-action@v7
+      with:
+        certificate: '${{ secrets.WINDOWS_PFX_BASE64 }}'
+        password: '${{ secrets.WINDOWS_PFX_PASSWORD }}'
+        folder: ${{ env.BUILD_DIR }}
